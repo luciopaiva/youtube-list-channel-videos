@@ -26,6 +26,8 @@ Finally, run it:
 
 The string `UUQRPDZMSwXFEDS67uc7kIdg` is a sample YouTube channel. You'll want to replace it with some other channel's id.
 
+If everything goes well, an output file will be created with the name `<channel-id>.tsv`.
+
 References:
 
 - https://stackoverflow.com/a/27872244/778272

@@ -58,6 +58,7 @@ async function main(args) {
 
     const apiKey = getApiKeyFromConfigFile();
 
+    const records = [];
     let nextPageToken = undefined;
     do {
         let videos;
@@ -76,9 +77,17 @@ async function main(args) {
 
             const videoUrl = `https://www.youtube.com/watch?v=${id}`;
             const fields = [id, videoUrl, publishedAt, title, thumbnailUrl];
-            console.info(fields.join("\t"));
+            records.push(fields.join("\t"));
         }
+
+        console.info("Page done");
+
     } while (nextPageToken?.length > 0);
+
+    const fileName = `${playlistId}.tsv`;
+    fs.writeFileSync(fileName, records.join("\n"));
+    console.info(`Video count: ${records.length}`);
+    console.info(`File saved: "${fileName}"`);
 }
 
 main(process.argv.slice(2));

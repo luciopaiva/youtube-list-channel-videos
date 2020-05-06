@@ -107,12 +107,11 @@ class ListVideos {
     }
 }
 
-const args = process.argv.slice(2);
-if (typeof args[0] !== "string" || args[0].length === 0) {
+const playlistId = process.argv[2];
+if (typeof playlistId !== "string" || playlistId.length === 0) {
     console.error("Missing argument 'channel-id'");
     process.exit(ERROR);
 }
-const playlistId = args[0];
 
 const app = new ListVideos(playlistId);
 app.run();

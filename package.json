@@ -1,5 +1,5 @@
 {
-  "name": "youtube-channel-videos",
+  "name": "youtube-list-channel-videos",
   "version": "1.0.0",
   "description": "Simple script to fetch the list of all videos uploaded to a given channel.",
   "main": "list-videos.js",

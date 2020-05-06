@@ -1,5 +1,5 @@
 
-# YouTube channel videos
+# List YouTube channel videos
 
 Simple script to fetch the list of all videos uploaded to a given YouTube channel.
 

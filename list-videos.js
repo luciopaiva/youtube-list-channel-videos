@@ -66,11 +66,17 @@ async function main(args) {
 
         // dump videos to stdout
         for (const video of videos) {
+            // check https://developers.google.com/youtube/v3/docs/playlistItems for field descriptions
             const id = video.contentDetails?.videoId;
             const publishedAt = video.contentDetails?.videoPublishedAt;
             const title = video.snippet?.title;
+            // valid thumbnail sizes:
+            // default (120x90), medium (320x180), high (480x360), standard (640x480), maxres (1280x720)
+            const thumbnailUrl = video.snippet?.thumbnails?.medium?.url;
 
-            console.info(`${publishedAt}\t${title}\thttps://www.youtube.com/watch?v=${id}`);
+            const videoUrl = `https://www.youtube.com/watch?v=${id}`;
+            const fields = [id, videoUrl, publishedAt, title, thumbnailUrl];
+            console.info(fields.join("\t"));
         }
     } while (nextPageToken?.length > 0);
 }

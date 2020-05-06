@@ -2,6 +2,9 @@
 const fs = require("fs");
 const axios = require("axios");
 
+const ERROR = 1;
+const RESULTS_PER_PAGE = 50;  // max permitted by the API
+
 class ListVideos {
 
     /** @type {String} */
@@ -27,7 +30,7 @@ class ListVideos {
 
             if (!configFile?.["apiKey"]) {
                 console.error("File config.json is missing API key - check README.md for instructions");
-                process.exit(1);
+                process.exit(ERROR);
             }
 
             this.apiKey = configFile["apiKey"];
@@ -42,7 +45,7 @@ class ListVideos {
             const result = await axios.get("https://www.googleapis.com/youtube/v3/playlistItems", {
                 params: {
                     part: "snippet,contentDetails",
-                    maxResults: 50,  // max permitted by the API
+                    maxResults: RESULTS_PER_PAGE,
                     playlistId: this.playlistId,
                     ...(pageToken && {pageToken}),  // include page token if one was passed
                     key: this.apiKey
@@ -57,13 +60,13 @@ class ListVideos {
 
             if (!Array.isArray(videos)) {
                 console.error("Could not retrieve list of videos");
-                process.exit(1);
+                process.exit(ERROR);
             }
 
             return [videos, nextPageToken];
         } catch (e) {
             console.error(e);
-            process.exit(1);
+            process.exit(ERROR);
         }
     }
 
@@ -107,7 +110,7 @@ class ListVideos {
 const args = process.argv.slice(2);
 if (typeof args[0] !== "string" || args[0].length === 0) {
     console.error("Missing argument 'channel-id'");
-    process.exit(1);
+    process.exit(ERROR);
 }
 const playlistId = args[0];
 

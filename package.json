@@ -1,0 +1,15 @@
+{
+  "name": "youtube-channel-videos",
+  "version": "1.0.0",
+  "description": "Simple script to fetch the list of all videos uploaded to a given channel.",
+  "main": "list-videos.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Lucio Paiva <luciopaiva@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.19.2"
+  }
+}

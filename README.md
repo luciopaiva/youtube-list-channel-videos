@@ -22,7 +22,9 @@ Copy the new key and paste it into a new file named `config.json` in this folder
 
 Finally, run it:
 
-    node list-videos
+    node list-videos UUQRPDZMSwXFEDS67uc7kIdg
+
+The string `UUQRPDZMSwXFEDS67uc7kIdg` is a sample YouTube channel. You'll want to replace it with some other channel's id.
 
 References:
 

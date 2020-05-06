@@ -2,8 +2,6 @@
 const fs = require("fs");
 const axios = require("axios");
 
-const channelUploadPlaylistId = "UUQRPDZMSwXFEDS67uc7kIdg";
-
 /**
  * @return {{apiKey: String}}
  */
@@ -50,14 +48,20 @@ async function getPlaylistVideosPage(config, playlistId, pageToken) {
     }
 }
 
-async function main() {
+async function main(args) {
+    if (typeof args[0] !== "string" || args[0].length === 0) {
+        console.error("Missing argument 'channel-id'");
+        process.exit(1);
+    }
+    const playlistId = args[0];
+
     const config = loadConfig();
 
     let nextPageToken = undefined;
     do {
         let videos;
         // fetch next page
-        [videos, nextPageToken] = await getPlaylistVideosPage(config, channelUploadPlaylistId, nextPageToken);
+        [videos, nextPageToken] = await getPlaylistVideosPage(config, playlistId, nextPageToken);
 
         // dump videos to stdout
         for (const video of videos) {
@@ -67,7 +71,7 @@ async function main() {
 
             console.info(`${publishedAt}\t${title}\thttps://www.youtube.com/watch?v=${id}`);
         }
-    } while (nextPageToken && nextPageToken.length > 0);
+    } while (nextPageToken?.length > 0);
 }
 
-main();
+main(process.argv.slice(2));

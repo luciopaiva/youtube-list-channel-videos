@@ -2,92 +2,114 @@
 const fs = require("fs");
 const axios = require("axios");
 
-/**
- * @return {String}
- */
-function getApiKeyFromConfigFile() {
-    try {
-        const configFile = JSON.parse(fs.readFileSync("config.json", "utf-8"));
+class ListVideos {
 
-        if (!configFile?.["apiKey"]) {
-            console.error("File config.json is missing API key - check README.md for instructions");
-            process.exit(1);
-        }
+    /** @type {String} */
+    apiKey;
+    /** @type {String} */
+    playlistId;
 
-        return configFile["apiKey"];
-    } catch(e) {
-        console.error("Error opening config.json - check README.md for instructions");
-        process.exit(1);
+    videoCount = 0;
+    totalVideoCount = 0;
+
+    constructor(playlistId) {
+        this.playlistId = playlistId;
+
+        this.getApiKeyFromConfigFile();
     }
-}
 
-async function getPlaylistVideosPage(apiKey, playlistId, pageToken) {
-    try {
-        const result = await axios.get("https://www.googleapis.com/youtube/v3/playlistItems", {
-            params: {
-                part: "snippet,contentDetails",
-                maxResults: 50,  // max permitted by the API
-                playlistId: playlistId,
-                ...(pageToken && {pageToken}),  // include page token if one was passed
-                key: apiKey
+    /**
+     * @return {String}
+     */
+    getApiKeyFromConfigFile() {
+        try {
+            const configFile = JSON.parse(fs.readFileSync("config.json", "utf-8"));
+
+            if (!configFile?.["apiKey"]) {
+                console.error("File config.json is missing API key - check README.md for instructions");
+                process.exit(1);
             }
-        });
 
-        const videos = result?.data?.items;
-        const nextPageToken = result?.data?.nextPageToken;
-
-        if (!Array.isArray(videos)) {
-            console.error("Could not retrieve list of videos");
+            this.apiKey = configFile["apiKey"];
+        } catch(e) {
+            console.error("Error opening config.json - check README.md for instructions");
             process.exit(1);
         }
-
-        return [videos, nextPageToken];
-    } catch (e) {
-        console.error(e);
-        process.exit(1);
     }
-}
 
-/** @return {void} */
-async function main(args) {
-    if (typeof args[0] !== "string" || args[0].length === 0) {
-        console.error("Missing argument 'channel-id'");
-        process.exit(1);
-    }
-    const playlistId = args[0];
+    async getPlaylistVideosPage(pageToken) {
+        try {
+            const result = await axios.get("https://www.googleapis.com/youtube/v3/playlistItems", {
+                params: {
+                    part: "snippet,contentDetails",
+                    maxResults: 50,  // max permitted by the API
+                    playlistId: this.playlistId,
+                    ...(pageToken && {pageToken}),  // include page token if one was passed
+                    key: this.apiKey
+                }
+            });
 
-    const apiKey = getApiKeyFromConfigFile();
+            const data = result?.data;
+            const videos = data?.items;
+            const nextPageToken = data?.nextPageToken;
+            const pageInfo = data?.pageInfo;
+            this.totalVideoCount = pageInfo?.totalResults;
 
-    const records = [["id", "url", "publishedAt", "title", "thumbnail"].join("\t")];
-    let nextPageToken = undefined;
-    do {
-        let videos;
-        // fetch next page
-        [videos, nextPageToken] = await getPlaylistVideosPage(apiKey, playlistId, nextPageToken);
+            if (!Array.isArray(videos)) {
+                console.error("Could not retrieve list of videos");
+                process.exit(1);
+            }
 
-        // dump videos to stdout
-        for (const video of videos) {
-            // check https://developers.google.com/youtube/v3/docs/playlistItems for field descriptions
-            const id = video.contentDetails?.videoId;
-            const publishedAt = video.contentDetails?.videoPublishedAt;
-            const title = video.snippet?.title;
-            // valid thumbnail sizes:
-            // default (120x90), medium (320x180), high (480x360), standard (640x480), maxres (1280x720)
-            const thumbnailUrl = video.snippet?.thumbnails?.medium?.url;
-
-            const videoUrl = `https://www.youtube.com/watch?v=${id}`;
-            const fields = [id, videoUrl, publishedAt, title, thumbnailUrl];
-            records.push(fields.join("\t"));
+            return [videos, nextPageToken];
+        } catch (e) {
+            console.error(e);
+            process.exit(1);
         }
+    }
 
-        console.info("Page done");
+    /** @return {void} */
+    async run() {
+        const records = [["id", "url", "publishedAt", "title", "thumbnail"].join("\t")];
+        let nextPageToken = undefined;
+        do {
+            let videos;
+            // fetch next page
+            [videos, nextPageToken] = await this.getPlaylistVideosPage(nextPageToken);
 
-    } while (nextPageToken?.length > 0);
+            // dump videos to stdout
+            for (const video of videos) {
+                // check https://developers.google.com/youtube/v3/docs/playlistItems for field descriptions
+                const id = video.contentDetails?.videoId;
+                const publishedAt = video.contentDetails?.videoPublishedAt;
+                const title = video.snippet?.title;
+                // valid thumbnail sizes:
+                // default (120x90), medium (320x180), high (480x360), standard (640x480), maxres (1280x720)
+                const thumbnailUrl = video.snippet?.thumbnails?.medium?.url;
 
-    const fileName = `${playlistId}.tsv`;
-    fs.writeFileSync(fileName, records.join("\n"));
-    console.info(`Video count: ${records.length}`);
-    console.info(`File saved: "${fileName}"`);
+                const videoUrl = `https://www.youtube.com/watch?v=${id}`;
+                const fields = [id, videoUrl, publishedAt, title, thumbnailUrl];
+                records.push(fields.join("\t"));
+            }
+
+            this.videoCount += videos.length;
+            const percent = 100 * this.videoCount / this.totalVideoCount;
+            console.info(`${percent.toFixed(0)}%`);
+
+        } while (nextPageToken?.length > 0);
+
+        const fileName = `${playlistId}.tsv`;
+        fs.writeFileSync(fileName, records.join("\n"));
+        console.info(`Video count: ${this.videoCount}`);
+        console.info(`File saved: "${fileName}"`);
+    }
 }
 
-main(process.argv.slice(2));
+const args = process.argv.slice(2);
+if (typeof args[0] !== "string" || args[0].length === 0) {
+    console.error("Missing argument 'channel-id'");
+    process.exit(1);
+}
+const playlistId = args[0];
+
+const app = new ListVideos(playlistId);
+app.run();

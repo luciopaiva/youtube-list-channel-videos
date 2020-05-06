@@ -3,33 +3,33 @@ const fs = require("fs");
 const axios = require("axios");
 
 /**
- * @return {{apiKey: String}}
+ * @return {String}
  */
-function loadConfig() {
+function getApiKeyFromConfigFile() {
     try {
         const configFile = JSON.parse(fs.readFileSync("config.json", "utf-8"));
 
-        if (!configFile?.apiKey) {
-            console.error("Missing API key");
+        if (!configFile?.["apiKey"]) {
+            console.error("File config.json is missing API key - check README.md for instructions");
             process.exit(1);
         }
 
-        return configFile;
+        return configFile["apiKey"];
     } catch(e) {
-        console.error("Error opening config.json");
+        console.error("Error opening config.json - check README.md for instructions");
         process.exit(1);
     }
 }
 
-async function getPlaylistVideosPage(config, playlistId, pageToken) {
+async function getPlaylistVideosPage(apiKey, playlistId, pageToken) {
     try {
         const result = await axios.get("https://www.googleapis.com/youtube/v3/playlistItems", {
             params: {
                 part: "snippet,contentDetails",
-                maxResults: 50,
+                maxResults: 50,  // max permitted by the API
                 playlistId: playlistId,
-                ...(pageToken && {pageToken}),
-                key: config.apiKey
+                ...(pageToken && {pageToken}),  // include page token if one was passed
+                key: apiKey
             }
         });
 
@@ -48,6 +48,7 @@ async function getPlaylistVideosPage(config, playlistId, pageToken) {
     }
 }
 
+/** @return {void} */
 async function main(args) {
     if (typeof args[0] !== "string" || args[0].length === 0) {
         console.error("Missing argument 'channel-id'");
@@ -55,13 +56,13 @@ async function main(args) {
     }
     const playlistId = args[0];
 
-    const config = loadConfig();
+    const apiKey = getApiKeyFromConfigFile();
 
     let nextPageToken = undefined;
     do {
         let videos;
         // fetch next page
-        [videos, nextPageToken] = await getPlaylistVideosPage(config, playlistId, nextPageToken);
+        [videos, nextPageToken] = await getPlaylistVideosPage(apiKey, playlistId, nextPageToken);
 
         // dump videos to stdout
         for (const video of videos) {

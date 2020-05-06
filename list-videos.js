@@ -58,7 +58,7 @@ async function main(args) {
 
     const apiKey = getApiKeyFromConfigFile();
 
-    const records = [];
+    const records = [["id", "url", "publishedAt", "title", "thumbnail"].join("\t")];
     let nextPageToken = undefined;
     do {
         let videos;

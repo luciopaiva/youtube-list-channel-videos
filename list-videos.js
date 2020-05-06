@@ -1,16 +1,4 @@
 
-// https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=UCQRPDZMSwXFEDS67uc7kIdg&key=[YOUR_API_KEY]
-
-//GET https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=UCQRPDZMSwXFEDS67uc7kIdg&key=[YOUR_API_KEY] HTTP/1.1
-//
-// Authorization: Bearer [YOUR_ACCESS_TOKEN]
-// Accept: application/json
-
-//GET https://www.googleapis.com/youtube/v3/playlistItems?part=snippet%2CcontentDetails&maxResults=50&playlistId=UUQRPDZMSwXFEDS67uc7kIdg&key=[YOUR_API_KEY] HTTP/1.1
-//
-// Authorization: Bearer [YOUR_ACCESS_TOKEN]
-// Accept: application/json
-
 const fs = require("fs");
 const axios = require("axios");
 
@@ -63,40 +51,13 @@ async function getPlaylistVideosPage(config, playlistId, pageToken) {
 async function main() {
     const config = loadConfig();
 
-    // const result1 = await axios.get("https://www.googleapis.com/youtube/v3/channels", {
-    //     params: {
-    //         part: "contentDetails",
-    //         id: channelUploadPlaylistId,
-    //         key: config.apiKey
-    //     }
-    // });
-    //
-    // const uploadPlaylistId = result1?.data?.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
-    // console.info(uploadPlaylistId);
-
-    // const uploadPlaylistId = channelUploadPlaylistId;
-    //
-    // const result2 = await axios.get("https://www.googleapis.com/youtube/v3/playlistItems", {
-    //     params: {
-    //         part: "snippet,contentDetails",
-    //         maxResults: 50,
-    //         // id: channelUploadPlaylistId,
-    //         playlistId: uploadPlaylistId,
-    //         key: config.apiKey
-    //     }
-    // });
-    //
-    // const videos = result2?.data?.items;
-    // if (!Array.isArray(videos)) {
-    //     console.error("Could not retrieve list of videos");
-    //     process.exit(1);
-    // }
-
     let nextPageToken = undefined;
     do {
         let videos;
+        // fetch next page
         [videos, nextPageToken] = await getPlaylistVideosPage(config, channelUploadPlaylistId, nextPageToken);
 
+        // dump videos to stdout
         for (const video of videos) {
             const id = video.contentDetails?.videoId;
             const publishedAt = video.contentDetails?.videoPublishedAt;

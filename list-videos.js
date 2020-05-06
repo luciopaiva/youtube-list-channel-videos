@@ -4,21 +4,23 @@ const axios = require("axios");
 
 const channelUploadPlaylistId = "UUQRPDZMSwXFEDS67uc7kIdg";
 
+/**
+ * @return {{apiKey: String}}
+ */
 function loadConfig() {
-    let configFile;
     try {
-        configFile = JSON.parse(fs.readFileSync("config.json", "utf-8"));
+        const configFile = JSON.parse(fs.readFileSync("config.json", "utf-8"));
+
+        if (!configFile?.apiKey) {
+            console.error("Missing API key");
+            process.exit(1);
+        }
+
+        return configFile;
     } catch(e) {
         console.error("Error opening config.json");
         process.exit(1);
     }
-
-    if (!configFile?.apiKey) {
-        console.error("Missing API key");
-        process.exit(1);
-    }
-
-    return configFile;
 }
 
 async function getPlaylistVideosPage(config, playlistId, pageToken) {

@@ -14,14 +14,19 @@ class App {
     }
 
     processRows(rows) {
-        const thumbnails = /** @type {String[]} */ rows
-            .map(row => row.split("\t"))
-            .map(fields => fields[fields.length - 1]);
+        for (const row of rows) {
+            const fields = row.split("\t");
+            const videoUrl = fields[1];
+            const imgUrl = fields[fields.length - 1];
 
-        for (const url of thumbnails) {
+            const anchor = document.createElement("a");
+            anchor.setAttribute("href", videoUrl);
+
             const img = document.createElement("img");
-            img.setAttribute("src", url);
-            document.body.appendChild(img);
+            img.setAttribute("src", imgUrl);
+
+            anchor.appendChild(img);
+            document.body.appendChild(anchor);
         }
     }
 }

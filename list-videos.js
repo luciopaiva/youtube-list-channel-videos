@@ -78,6 +78,9 @@ class ListVideos {
             let videos;
             // fetch next page
             [videos, nextPageToken] = await this.getPlaylistVideosPage(nextPageToken);
+            if (videos.length === 0) {
+                console.warn("Page returned empty list of videos!");
+            }
 
             // dump videos to stdout
             for (const video of videos) {
@@ -96,7 +99,7 @@ class ListVideos {
 
             this.videoCount += videos.length;
             const percent = 100 * this.videoCount / this.totalVideoCount;
-            console.info(`${percent.toFixed(0)}%`);
+            console.info(`${percent.toFixed(0)}% (${this.videoCount}/${this.totalVideoCount})`);
 
         } while (nextPageToken?.length > 0);
 

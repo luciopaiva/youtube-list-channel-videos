@@ -5,6 +5,27 @@ const axios = require("axios");
 const ERROR = 1;
 const RESULTS_PER_PAGE = 50;  // max permitted by the API
 
+class Video {
+    /** @type {String} */
+    id;
+    /** @type {String} */
+    videoUrl;
+    /** @type {String} */
+    publishedAt;
+    /** @type {String} */
+    title;
+    /** @type {String} */
+    thumbnailUrl;
+
+    toString() {
+        return [this.id, this.videoUrl, this.publishedAt, this.title, this.thumbnailUrl].join("\t");
+    }
+
+    static getHeaders() {
+        return ["id", "url", "publishedAt", "title", "thumbnail"].join("\t");
+    }
+}
+
 class ListVideos {
 
     /** @type {String} */
@@ -72,39 +93,46 @@ class ListVideos {
 
     /** @return {void} */
     async run() {
-        const records = [["id", "url", "publishedAt", "title", "thumbnail"].join("\t")];
+        /** @type {Video[]} */
+        const videos = [];
+
         let nextPageToken = undefined;
         do {
-            let videos;
+            let rawVideos;
             // fetch next page
-            [videos, nextPageToken] = await this.getPlaylistVideosPage(nextPageToken);
-            if (videos.length === 0) {
-                console.warn("Page returned empty list of videos!");
+            [rawVideos, nextPageToken] = await this.getPlaylistVideosPage(nextPageToken);
+            if (rawVideos.length === 0) {
+                console.warn("Page returned empty list of rawVideos!");
             }
 
-            // dump videos to stdout
-            for (const video of videos) {
+            // map data to video objects
+            for (const rawVideo of rawVideos) {
+                const video = new Video();
+
                 // check https://developers.google.com/youtube/v3/docs/playlistItems for field descriptions
-                const id = video.contentDetails?.videoId;
-                const publishedAt = video.contentDetails?.videoPublishedAt;
-                const title = video.snippet?.title;
+                video.id = rawVideo.contentDetails?.videoId;
+                video.publishedAt = rawVideo.contentDetails?.videoPublishedAt;
+                video.title = rawVideo.snippet?.title;
                 // valid thumbnail sizes:
                 // default (120x90), medium (320x180), high (480x360), standard (640x480), maxres (1280x720)
-                const thumbnailUrl = video.snippet?.thumbnails?.medium?.url;
+                video.thumbnailUrl = rawVideo.snippet?.thumbnails?.medium?.url;
+                video.videoUrl = `https://www.youtube.com/watch?v=${video.id}`;
 
-                const videoUrl = `https://www.youtube.com/watch?v=${id}`;
-                const fields = [id, videoUrl, publishedAt, title, thumbnailUrl];
-                records.push(fields.join("\t"));
+                videos.push(video);
             }
 
-            this.videoCount += videos.length;
+            videos.sort((a, b) => a.publishedAt.localeCompare(b.publishedAt));
+
+            this.videoCount += rawVideos.length;
             const percent = 100 * this.videoCount / this.totalVideoCount;
             console.info(`${percent.toFixed(0)}% (${this.videoCount}/${this.totalVideoCount})`);
 
         } while (nextPageToken?.length > 0);
 
         const fileName = `${playlistId}.tsv`;
-        fs.writeFileSync(fileName, records.join("\n"));
+        const lines = [Video.getHeaders()];
+        videos.forEach(video => lines.push(video.toString()));
+        fs.writeFileSync(fileName, lines.join("\n"));
         console.info(`Video count: ${this.videoCount}`);
         console.info(`File saved: "${fileName}"`);
     }

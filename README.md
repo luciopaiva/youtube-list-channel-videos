@@ -8,7 +8,7 @@ To run it, first make sure you have `nvm` installed and then:
     nvm install
     npm install
 
-You need to obtain a developer key in order to be able to call YouTube APIs. Do this here:
+You need to obtain a developer key in order to be able to call YouTube APIs. The full instructions can be seen [here](https://developers.google.com/youtube/v3/getting-started). You needs just an API key, not OAuth authorization. Once you have a project with YouTube API access, this is where you create a key:
 
 https://console.cloud.google.com/apis/credentials
 
